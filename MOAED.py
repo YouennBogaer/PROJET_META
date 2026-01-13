@@ -168,7 +168,16 @@ class MOEAD():
         Returns the indices of the T closest weight vectors of any weight vector based on euclidian distance.
         Output should be a list B_ of length self.N_.
         """
-        return [0 for i in range(len(self.weights))]
+        neighborhood = [None for _ in range(self.N_)]
+        # inverted dict to obtain index from weight vector as a key
+        weight_dict = {w:i for i,w in enumerate(self.weights)}
+        for index_w,w in enumerate(self.weights):
+            # We sort weight vectors by distance from w
+            sorted_neighbors_w = self.weights.copy().sort(key=lambda x:np.linalg.norm(x,w))
+            # We keep the indexes of T_ closest weight vectors, except index 0 which is w itself
+            neighborhood[index_w] = [weight_dict[neighbor] for neighbor in sorted_neighbors_w[1:self.T_+1]]
+
+        return neighborhood
     
     # TODO
     def init_pop(self):
