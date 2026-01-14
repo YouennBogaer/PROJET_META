@@ -8,8 +8,16 @@ PAES_test.ipynb : tentative PAES from scratch
 ### Devrait tester nos resultats grace au framework open source suivant : https://github.com/moead-framework/framework
 
 
-
 # Lancement
+
+## Modules
+
+Installez les modules nécessaires
+
+```bash
+pip install -r .\requirements.txt
+```
+# Execution
 
 L'exécution principale se fait via le fichier `main.py`.
 les résulats se trouvent dans le dossier results si y'en a pas il est créé automatiquement

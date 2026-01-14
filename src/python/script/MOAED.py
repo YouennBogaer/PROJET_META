@@ -1,13 +1,13 @@
 import numpy as np
 import random as rd
-import MOP
-from params import params
+
+from src.python.script.MOP import MOP
+from src.python.script.params import params
 
 
 class MOEAD():
     def __init__(self, mop: MOP, stop_criterion, weights, len_neighborhood, init_population=None):
-        """_summary_
-
+        """
         Args:
             mop (MOP Class) : multi objectif problem to treat.
             stop_criterion : indicates what should stop the research of Pareto front solutions 
@@ -15,6 +15,7 @@ class MOEAD():
             weights (List[Array]): List of Weight vectors corresponding to each subproblems. 
                 Each Weight vector is an array of length equals to the problem dimension i.e. number of objectives.
             len_neighborhood (int): number of closest weight vector to find in the neighborhood of each weight vector.
+            init_population (List[array]): if a preferred initial population is needed.
         """
         self.mop = mop
         # dimension of the multi objective problem (number of objectives)
