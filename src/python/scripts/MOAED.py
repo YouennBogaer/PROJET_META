@@ -1,11 +1,10 @@
 import numpy as np
 import random as rd
-import MOP
+import src.python.scripts.MOP as MOP
 
 class MOEAD():
     def __init__(self, mop:MOP, stop_criterion, weights, len_neighborhood):
-        """_summary_
-
+        """
         Args:
             mop (MOP Class) : multi objectif problem to treat.
             stop_criterion : indicates what should stop the research of Pareto front solutions 
