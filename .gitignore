@@ -1,2 +1,4 @@
 venv
 moead-py-master
+results
+*.xml
