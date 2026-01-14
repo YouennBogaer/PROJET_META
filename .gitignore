@@ -1,3 +1,5 @@
 venv
 moead-py-master
+results
+*.xml
 tests.ipynb
