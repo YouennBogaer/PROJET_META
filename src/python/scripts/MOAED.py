@@ -181,16 +181,14 @@ class MOEAD():
 
         return neighborhood
     
-    # TODO
     def init_z(self):
         """
         Generates the initial reference point for ideal values.
-        Returns a list which length is the dimension of the problem.
+        Returns a numpy array which length is the dimension of the problem.
         """
         F_pop_array = np.array(self.F_pop.copy())
-        
-
-        return [0 for i in range(self.dim)]
+        # Returns the maximum value for each objective function
+        return np.max(F_pop_array,axis=0)
     
     # TODO
     def is_criterion_met(self):
