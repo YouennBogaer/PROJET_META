@@ -227,7 +227,7 @@ class MOEAD():
             # TODO Remarque est ce que le poids lui meme est son propre voisin pusique distance = 0 ?
             # Peut etre faire distances[1:self.T_+1]. 
 
-            indices = [d[1] for d in distances[:self.T_]]
+            indices = [d[1] for d in distances[1:self.T_+1]]
             B.append(indices)
         return B
 
@@ -242,7 +242,7 @@ class MOEAD():
         population = []
         for _ in range(self.N_):
             chromosome = []
-            for n in range(self.params['N']):
+            for _ in range(self.params['N']):
                 srv = rd.randint(0, self.params['M'])
                 cpu = rd.randint(1, 7)
                 chromosome.extend([srv, cpu])
