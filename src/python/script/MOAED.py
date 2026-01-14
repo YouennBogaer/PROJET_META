@@ -1,11 +1,12 @@
 import numpy as np
 import random as rd
 
+from src.python.script import params
 from src.python.script.MOP import MOP
 
 
 class MOEAD():
-    def __init__(self, mop: MOP, stop_criterion, weights, len_neighborhood, params, init_population=None):
+    def __init__(self, mop: MOP, stop_criterion, weights, len_neighborhood, params = params, init_population=None,percentage_mutation = 0.2):
         """
         Args:
             mop (MOP Class) : multi objectif problem to treat.
@@ -19,7 +20,8 @@ class MOEAD():
         self.mop = mop
         # dimension of the multi objective problem (number of objectives)
         self.dim = mop.getDim()
-
+        # TODO : #Peut être mettre le dictionnaire paramls ici (plus logique) et l'ajouter en paramètre de classe
+        self.params = params
         self.criterion = stop_criterion
         self.weights = weights
         self.T_ = len_neighborhood
@@ -40,7 +42,8 @@ class MOEAD():
             self.population, self.F_pop = self.init_pop()
         else:
             if len(init_population) != self.N_:
-                raise ValueError(f"Initial population should be of same length as weights.\nPopulation length : {len(self.population)}\nExpected length :{self.N_}")
+                raise ValueError(
+                    f"Initial population should be of same length as weights.\nPopulation length : {len(self.population)}\nExpected length :{self.N_}")
             self.population = init_population
             self.F_pop = [self.mop.evaluate(x) for x in self.population]
 
@@ -49,18 +52,19 @@ class MOEAD():
 
         # Competeur de genération
         self.gen = 0
-        # TODO : #Peut être mettre le dictionnaire paramls ici (plus logique) et l'ajouter en paramètre de classe
-        self.params = params
+
+
+        self.percentage_mutation = percentage_mutation
 
     # Step 2
     def update(self):
         for i in range(self.N_):
             # Step 2.1 : Reproduction
 
-            #Selction of 2 parents
+            # Selction of 2 parents
             k, l = self.select_mating(i)
-            x_k, x_l = self.population[k], self.population[l] # 2 chromosomes of the parents
-            y = self.generate_solution(x_k, x_l) # create a child
+            x_k, x_l = self.population[k], self.population[l]  # 2 chromosomes of the parents
+            y = self.generate_solution(x_k, x_l)  # create a child
 
             # Step 2.2 : Improvement
             y_clean = self.repair(y)
@@ -96,7 +100,7 @@ class MOEAD():
         """
         Execute the MOEAD algorithm.
         """
-        #If we don't pass the limit we continue
+        # If we don't pass the limit we continue
         while not self.is_criterion_met():
             self.update()
             if self.gen % 10 == 0:
@@ -173,7 +177,7 @@ class MOEAD():
                 y[i] = x2[i]
 
         # Mutation : On change une tâche au hasard
-        if rd.random() < 0.2:  # 20% de chance de mutation
+        if rd.random() < self.percentage_mutation:
             idx_tache = rd.randint(0, (len(y) // 2) - 1)
             # Mutation du serveur
             y[2 * idx_tache] = rd.randint(0, self.params['M'])
@@ -222,12 +226,14 @@ class MOEAD():
 
             # We sort the list
             distances.sort()
-            #T is an int to fix the number of closest neighbor that we keep
+            # T is an int to fix the number of closest neighbor that we keep
 
             # TODO Remarque est ce que le poids lui meme est son propre voisin pusique distance = 0 ?
-            # Peut etre faire distances[1:self.T_+1]. 
+            # Peut etre faire distances[1:self.T_+1].
+            # Non pcq après si on l'ajoute pas au voisinage on passe pas le vecteur dans la fonction de Tchebimachin là donc on comparerait la solution
+            # juste avec les solutions des vecteurs voisins et même pas à la solution associé au vecteur pour lequel il a été créé c'est quand même con
 
-            indices = [d[1] for d in distances[1:self.T_+1]]
+            indices = [d[1] for d in distances[:self.T_]]
             B.append(indices)
         return B
 

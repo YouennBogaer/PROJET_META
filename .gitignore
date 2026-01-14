@@ -3,3 +3,5 @@ moead-py-master
 results
 *.xml
 tests.ipynb
+__pycache__/
+*.pyc
