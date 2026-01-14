@@ -3,7 +3,7 @@ import random as rd
 import src.python.scripts.MOP as MOP
 
 class MOEAD():
-    def __init__(self, mop:MOP, stop_criterion, weights, len_neighborhood):
+    def __init__(self, mop:MOP, stop_criterion, weights, len_neighborhood, init_population):
         """
         Args:
             mop (MOP Class) : multi objectif problem to treat.
@@ -12,6 +12,7 @@ class MOEAD():
             weights (List[Array]): List of Weight vectors corresponding to each subproblems. 
                 Each Weight vector is an array of length equals to the problem dimension i.e. number of objectives.
             len_neighborhood (int): number of closest weight vector to find in the neighborhood of each weight vector.
+            init_population (List[Array]): initial population of solutions specific to the problem. Should of same length as weights.
         """
         self.mop = mop
         # dimension of the multi objective problem (number of objectives)
@@ -29,11 +30,15 @@ class MOEAD():
         self.ex_pop = []
         
         # Step 1.2 : Find T closest neighbors for each of the N weight vectors
-        # Stores the neighborrhood for each subproblems as an index of self.weights, and self.population
+        # Stores the neighborhood for each subproblems as an index of self.weights, and self.population
         self.B_ = self.neighborhood()
         
         # Step 1.3 : Generate an initial population
-        self.population, self.F_pop = self.init_pop()
+        if len(self.population) != self.N_:
+            raise ValueError(f"Initial population should be of same length as weights.\nPopulation length : {len(self.population)}\nExpected length :{self.N_}")
+        self.population = init_population
+        # Evaluation of solutions by the objective functions
+        self.F_pop = [self.mop.evaluate(x) for x in self.population]
         
         # Step 1.4 : Reference solution
         self.z_ = self.init_z()
@@ -161,11 +166,9 @@ class MOEAD():
         y_clean = y
         return y_clean  
     
-    #TODO
     def neighborhood(self):
         """
-        Returns the indices of the T closest weight vectors of any weight vector based on euclidian distance.
-        Output should be a list B_ of length self.N_.
+        Returns, for any weight vector, the indices of the T closest weight vectors, based on euclidian distance.
         """
         neighborhood = [None for _ in range(self.N_)]
         # inverted dict to obtain index from weight vector as a key
@@ -179,19 +182,14 @@ class MOEAD():
         return neighborhood
     
     # TODO
-    def init_pop(self):
-        """
-        Generates a population and stores each element by the MOP objective functions F.
-        Returns:
-            List[Array], List[Array]: population of solutions, evaluations by objective functions
-        """
-        # Need to figure out the generation of population
-        population = [np.array([0 for _ in range(self.dim)]) for _ in range(self.N_)]
-        F_pop = [self.mop.evaluate(x) for x in population]
-        return population, F_pop
-    
-    # TODO
     def init_z(self):
+        """
+        Generates the initial reference point for ideal values.
+        Returns a list which length is the dimension of the problem.
+        """
+        F_pop_array = np.array(self.F_pop.copy())
+        
+
         return [0 for i in range(self.dim)]
     
     # TODO
