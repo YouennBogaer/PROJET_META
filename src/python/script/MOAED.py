@@ -2,11 +2,10 @@ import numpy as np
 import random as rd
 
 from src.python.script.MOP import MOP
-from src.python.script.params import params
 
 
 class MOEAD():
-    def __init__(self, mop: MOP, stop_criterion, weights, len_neighborhood, init_population=None):
+    def __init__(self, mop: MOP, stop_criterion, weights, len_neighborhood, params, init_population=None):
         """
         Args:
             mop (MOP Class) : multi objectif problem to treat.
@@ -51,6 +50,7 @@ class MOEAD():
         # Competeur de genération
         self.gen = 0
         # TODO : #Peut être mettre le dictionnaire paramls ici (plus logique) et l'ajouter en paramètre de classe
+        self.params = params
 
     # Step 2
     def update(self):
@@ -176,7 +176,7 @@ class MOEAD():
         if rd.random() < 0.2:  # 20% de chance de mutation
             idx_tache = rd.randint(0, (len(y) // 2) - 1)
             # Mutation du serveur
-            y[2 * idx_tache] = rd.randint(0, params['M'])
+            y[2 * idx_tache] = rd.randint(0, self.params['M'])
             # Mutation des ressources
             y[2 * idx_tache + 1] = rd.randint(1, 7)
 
@@ -189,8 +189,8 @@ class MOEAD():
             y[i] = int(np.clip(y[i], low, high))
 
         # Contrainte : Somme des CPU par serveur <= 8
-        M = params['M']
-        cap_max = params['mnv']  # 8
+        M = self.params['M']
+        cap_max = self.params['mnv']  # 8
 
         usage = np.zeros(M + 1)
         for n in range(len(y) // 2):
@@ -242,8 +242,8 @@ class MOEAD():
         population = []
         for _ in range(self.N_):
             chromosome = []
-            for n in range(params['N']):
-                srv = rd.randint(0, params['M'])
+            for n in range(self.params['N']):
+                srv = rd.randint(0, self.params['M'])
                 cpu = rd.randint(1, 7)
                 chromosome.extend([srv, cpu])
             population.append(chromosome)

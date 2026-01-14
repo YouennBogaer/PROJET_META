@@ -3,13 +3,14 @@ import time
 import os
 import argparse
 
-
-from src.python.script.MOP import MOP
-from src.python.script.obj_functions import obj_functions
-from src.python.script.MOAED import MOEAD
-from src.python.script.params import params
-from src.python.script.weigth import generate_weights_simplex
-from src.python.script.save_results import enregistrer_json, afficher_pareto_3d
+from src.python.script import (MOP, 
+                               obj_functions,
+                               MOEAD,
+                               params,
+                               generate_weights_simplex,
+                               enregistrer_json,
+                               afficher_pareto_3d
+                               )
 
 N_tasks = params['N']
 tasks_data = {
