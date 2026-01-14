@@ -34,6 +34,7 @@ if __name__ == "__main__" :
     ]
 
     bornes = [(0, params['M']), (1, 7)] * N_tasks
+    # TODO Remarque : pk dim_x = 2 * N_tasks et pas juste 2 ?
     my_mop = MOP(obj_functions=obj_functions_list, dim_x=2 * N_tasks, bounds_x=bornes)
 
     weigths = generate_weights_simplex(m=3, H=20)

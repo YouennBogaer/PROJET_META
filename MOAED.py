@@ -5,7 +5,7 @@ from params import params
 
 
 class MOEAD():
-    def __init__(self, mop: MOP, stop_criterion, weights, len_neighborhood):
+    def __init__(self, mop: MOP, stop_criterion, weights, len_neighborhood, init_population=None):
         """_summary_
 
         Args:
@@ -36,7 +36,13 @@ class MOEAD():
         self.B_ = self.neighborhood()
 
         # Step 1.3 : Generate an initial population
-        self.population, self.F_pop = self.init_pop()
+        if init_population is None:
+            self.population, self.F_pop = self.init_pop()
+        else:
+            if len(init_population) != self.N_:
+                raise ValueError(f"Initial population should be of same length as weights.\nPopulation length : {len(self.population)}\nExpected length :{self.N_}")
+            self.population = init_population
+            self.F_pop = [self.mop.evaluate(x) for x in self.population]
 
         # Step 1.4 : Reference solution for each objectif
         self.z_ = self.init_z()
@@ -216,6 +222,10 @@ class MOEAD():
             # We sort the list
             distances.sort()
             #T is an int to fix the number of closest neighbor that we keep
+
+            # TODO Remarque est ce que le poids lui meme est son propre voisin pusique distance = 0 ?
+            # Peut etre faire distances[1:self.T_+1]. 
+
             indices = [d[1] for d in distances[:self.T_]]
             B.append(indices)
         return B
@@ -243,13 +253,14 @@ class MOEAD():
     # TODO
     def init_z(self):
         """
-
+        Initiates as infinite.
         """
         return [float('inf')] * self.dim
 
     # TODO
     def is_criterion_met(self):
         """
+        Compares criterion with gen attribute.
         Returns:
             Bool
         """
