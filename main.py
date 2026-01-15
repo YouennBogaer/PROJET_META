@@ -82,9 +82,7 @@ if __name__ == "__main__":
 
     #################################################################################################
     #
-    #   Our implementation of the MOEA/D algorithm for
-    #   "Gestion des ressources cloud : optimisation de l’allocation entre serveurs MEC et cloud"
-    #   multiobjectif problem.
+    #   Comparison with another implementation
     #
     #################################################################################################
     if args.evaluate:

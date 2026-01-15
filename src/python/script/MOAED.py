@@ -20,7 +20,6 @@ class MOEAD():
         self.mop = mop
         # dimension of the multi objective problem (number of objectives)
         self.dim = mop.getDim()
-        # TODO : #Peut être mettre le dictionnaire paramls ici (plus logique) et l'ajouter en paramètre de classe
         self.params = params
         self.criterion = stop_criterion
         self.weights = weights
@@ -168,7 +167,6 @@ class MOEAD():
                 return False
         return True
 
-    # TODO
     def generate_solution(self, x1, x2):
         # On crée un enfant par croisement uniforme
         y = np.array(x1).copy()
@@ -208,8 +206,6 @@ class MOEAD():
                     usage[srv] += cpu
         return y
 
-        # TODO
-
     def neighborhood(self):
         """
         Returns :
@@ -227,12 +223,6 @@ class MOEAD():
             # We sort the list
             distances.sort()
             # T is an int to fix the number of closest neighbor that we keep
-
-            # TODO Remarque est ce que le poids lui meme est son propre voisin pusique distance = 0 ?
-            # Peut etre faire distances[1:self.T_+1].
-            # Non pcq après si on l'ajoute pas au voisinage on passe pas le vecteur dans la fonction de Tchebimachin là donc on comparerait la solution
-            # juste avec les solutions des vecteurs voisins et même pas à la solution associé au vecteur pour lequel il a été créé c'est quand même con
-
             indices = [d[1] for d in distances[:self.T_]]
             B.append(indices)
         return B
@@ -244,7 +234,6 @@ class MOEAD():
         Returns:
             List[Array], List[Array]: population of solutions, evaluations by objective functions
         """
-        # Need to figure out the generation of population
         population = []
         for _ in range(self.N_):
             chromosome = []
@@ -257,14 +246,12 @@ class MOEAD():
         f_pop = [self.mop.evaluate(ind) for ind in population]
         return population, f_pop
 
-    # TODO
     def init_z(self):
         """
         Initiates as infinite.
         """
         return [float('inf')] * self.dim
 
-    # TODO
     def is_criterion_met(self):
         """
         Compares criterion with gen attribute.
