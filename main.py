@@ -12,6 +12,7 @@ from src.python.script import (MOP,
                                afficher_pareto_3d
                                )
 
+
 N_tasks = params['N']
 tasks_data = {
     'G': np.random.randint(10, 100, N_tasks),
@@ -29,7 +30,15 @@ if __name__ == "__main__":
                         help="Definit le nombre de découpage que l'on fait de notre problème")
     parser.add_argument("--neighbor", type=int, default=5,
                         help="Definit le nombre de voisisns des vecteurs à qui on va comparer le nouvel enfant")
+    parser.add_argument("--evaluate", action="store_true", help="Compare our implementation of MOEAD with another project")
 
+    #################################################################################################
+    #
+    #   Our implementation of the MOEA/D algorithm for
+    #   "Gestion des ressources cloud : optimisation de l’allocation entre serveurs MEC et cloud"
+    #   multiobjectif problem.
+    #
+    #################################################################################################
     # On conseil de visiter les voisins entre 5 et 10% du nombre de dimension on obtient le nombre de dimensions en
     # faisant m-1 parmis H et donc dans notre cas 3 parmi H
 
@@ -70,3 +79,13 @@ if __name__ == "__main__":
 
     if args.save_json:
         enregistrer_json(moead, filename=filename)
+
+    #################################################################################################
+    #
+    #   Our implementation of the MOEA/D algorithm for
+    #   "Gestion des ressources cloud : optimisation de l’allocation entre serveurs MEC et cloud"
+    #   multiobjectif problem.
+    #
+    #################################################################################################
+    if args.evaluate:
+        print("Yo")
