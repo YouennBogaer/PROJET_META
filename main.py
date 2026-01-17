@@ -17,6 +17,7 @@ from src.python.script import (MOP,
 from src.python.script.save_results import plot_parallel_coordinates
 from src.python.script.metrics import calculate_spacing, hypervolume, pf
 
+
 N_tasks = params['N']
 tasks_data = {
     'G': np.random.randint(10, 100, N_tasks),
@@ -35,6 +36,13 @@ if __name__ == "__main__":
     parser.add_argument("--neighbor", type=float, default=5,
                         help="Definit le nombre de voisisns des vecteurs à qui on va comparer le nouvel enfant")
 
+    #################################################################################################
+    #
+    #   Our implementation of the MOEA/D algorithm for
+    #   "Gestion des ressources cloud : optimisation de l’allocation entre serveurs MEC et cloud"
+    #   multiobjectif problem.
+    #
+    #################################################################################################
     # On conseil de visiter les voisins entre 5 et 10% du nombre de dimension on obtient le nombre de dimensions en
     # faisant m-1 parmis H et donc dans notre cas 3 parmi H
 
@@ -102,3 +110,11 @@ if __name__ == "__main__":
     plt.savefig("results/" + "HPList")
 
     plt.show()
+
+    #################################################################################################
+    #
+    #   Comparison with another implementation
+    #
+    #################################################################################################
+    if args.evaluate:
+        print("Yo")
