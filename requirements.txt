@@ -4,3 +4,4 @@ matplotlib
 pymoo
 pygmo
 pandas
+plotly
