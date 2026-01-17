@@ -1,83 +1,81 @@
 import numpy as np
 
-
-
-def obj_functions(chromosome, p, task) :
-    #print(f"Type du premier élément : {type(chromosome[0])}")
-    #print(f"Shape du chromosome : {np.shape(chromosome)}")
-    N = len(chromosome)//2
+def obj_functions(chromosome, p, task):
+    """
+    Calculates the three objective functions: Time, Energy, and Load Balance.
+    """
+    N = len(chromosome) // 2
     M = p['M']
 
-    TT_task = [] #temps d'éxécution de la task
+    # 1. Completion Time (F1)
+    TT_task = []
 
-
-    #Matrice de zéro pour représenter le temps total d'éxécution pour chaque serveur pour la consomation d'énergie
-
-    T_server = np.zeros(M+1)
-
-    for i in range (N):
-        srv_id = int(chromosome[2*i])
-        allocated_cpu = int(chromosome[2*i+1]) #Nb VM
+    for i in range(N):
+        srv_id = int(chromosome[2 * i])
+        allocated_cpu = int(chromosome[2 * i + 1]) # Number of VMs
 
         size_request = task['G'][i]
         size_result = task['RG'][i]
-
         parent_mec = task['parent'][i]
 
-        #détermination de j dans le papier
-
-        if srv_id == 0 :
-            j = 2
-        elif srv_id == parent_mec :
-            j = 1
+        # Determine if task is local, neighbor, or cloud
+        if srv_id == 0:
+            j = 2 # Cloud
+        elif srv_id == parent_mec:
+            j = 0 # Local
         else:
-            j = 0
+            j = 1 # Neighbor
 
+        # Transmission time based on location
         if j == 0:
             t_trans = size_request / p['WKp']
-            t_ret = size_result / p['WKp']  # TBn [cite: 346]
+            t_ret = size_result / p['WKp']
         elif j == 1:
             t_trans = (size_request / p['WKp']) + (size_request / p['WKq'])
-            t_ret = (size_result / p['WKp']) + (size_result / p['WKq'])  # TBn [cite: 348]
+            t_ret = (size_result / p['WKp']) + (size_result / p['WKq'])
         else:
             t_trans = (size_request / p['WKp']) + (size_request / p['WKq']) + (size_request / p['WKr'])
-            t_ret = (size_result / p['WKp']) + (size_result / p['WKq']) + (size_result / p['WKr'])  # TBn [cite: 349]
+            t_ret = (size_result / p['WKp']) + (size_result / p['WKq']) + (size_result / p['WKr'])
 
-        t_calc = size_request/(allocated_cpu * p['Pu']) #temps de calcul
+        # Processing time
+        t_calc = size_request / (allocated_cpu * p['Pu'])
 
-        t_total = t_trans + t_ret +t_calc
-
+        # Total time for this specific task
+        t_total = t_trans + t_ret + t_calc
         TT_task.append(t_total)
 
-        if srv_id > 0 :
-            T_server[srv_id] = max(T_server[srv_id], t_total)
-
+    # Final F1 is the maximum time among all tasks
     f1_ttot = max(TT_task)
 
-
-    #Calc de l'NRJ
-
-    #Conso à vide
-    ecb = sum(T_server[1:]*p['rx'])
+    # 2. Energy Consumption (F2)
+    # Basic operating energy for all MEC servers
+    ecb = M * p['rx'] * f1_ttot
 
     ecf = 0
-    eck = 0
+    # Dynamic energy for active VMs on MEC servers only
+    for n in range(N):
+        srv_id = int(chromosome[2 * n])
+        allocated_cpu = int(chromosome[2 * n + 1])
+        if srv_id > 0:
+            t_calc_n = task['G'][n] / (allocated_cpu * p['Pu'])
+            ecf += p['rf'] * allocated_cpu * t_calc_n
 
-    for s_id in range(1, M+1) :
-        vms_used = sum(chromosome[2 * k + 1] for k in range(N) if chromosome[2 * k] == s_id)
-        # Énergie des VM occupées sur ce serveur
-        ecf += vms_used * T_server[s_id] * p['rf']
-        # Énergie des VM libres sur ce serveur
-        eck += (p['mnv'] - vms_used) * T_server[s_id] * p['rn']
+    # Energy consumed by idle/unused CPUs
+    active_work_time = ecf / p['rf'] if p['rf'] != 0 else 0
+    total_available_time = sum(p['mnv'] for _ in range(M)) * f1_ttot
+    eck = p['rn'] * (total_available_time - active_work_time)
 
+    # Total Energy
     f2_ectot = ecb + ecf + eck
 
-    msu_servers = []
+    # 3. Load Balancing (F3)
+    # Calculate VM usage per MEC server
+    v_m = []
     for s_idx in range(1, M + 1):
         vms_used = sum(chromosome[2 * k + 1] for k in range(N) if chromosome[2 * k] == s_idx)
-        msu_servers.append(vms_used / p['mnv'])
+        v_m.append(vms_used)
 
-    # MSU est la variance de ces utilisations
-    f3_msu = np.var(msu_servers)
+    # Variance of the load across servers
+    f3_msu = np.var(v_m)
 
     return [f1_ttot, f2_ectot, f3_msu]

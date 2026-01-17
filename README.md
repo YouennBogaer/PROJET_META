@@ -30,7 +30,7 @@ python main.py [options]
 
 --stop : Définit le nombre total de générations pour l'algorithme. C'est le critère d'arrêt qui détermine la durée de l'optimisation. Par défaut : 100.
 
---save_json : USi cet argument est présent, le script enregistre les solutions et les scores dans un fichier .json.
+--save_json : Si cet argument est présent, le script enregistre les solutions et les scores dans un fichier .json.
 
 ## Example
 ```bash

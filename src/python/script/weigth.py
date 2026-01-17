@@ -17,14 +17,14 @@ def generate_weights_simplex(m, H):
         # print(f" combo type  {type (combo)}")
 
         # On ajoute le début et la fin
-        points = [0] + sorted(list(combo)) + [H]
+        points = [10^-20] + sorted(list(combo)) + [H]
         w = []
         for i in range(len(points) - 1):
             # On normalise les poids entre 0 et 1 (en gros on disvise juste par H et en prenant les points de 2 poids
             # on obtient une valeurs entre O et 1  et la somme de tous les poids donnent 1
             w.append((points[i + 1] - points[i]) / H)
         weights.append(np.array(w))
-    print(f"number of sub-problems generated {len(weights)}")
+    #print(f"number of sub-problems generated {len(weights)}")
     return weights
 
 

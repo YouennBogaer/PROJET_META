@@ -3,30 +3,33 @@ import random as rd
 
 from src.python.script import params
 from src.python.script.MOP import MOP
+from src.python.script.metrics import pf, hypervolume
 
 
 class MOEAD():
-    def __init__(self, mop: MOP, stop_criterion, weights, len_neighborhood, params = params, init_population=None,percentage_mutation = 0.2):
+    def __init__(self, mop: MOP, stop_criterion, weights, len_neighborhood, params=params, init_population=None,
+                 percentage_mutation=0.2):
         """
         Args:
-            mop (MOP Class) : multi objectif problem to treat.
-            stop_criterion : indicates what should stop the research of Pareto front solutions 
+            mop (MOP Class) : multi objective problem to treat.
+            stop_criterion : indicates what should stop the research of Pareto front solutions
                 (see self.is_criterion_met() and self.execute()).
-            weights (List[Array]): List of Weight vectors corresponding to each subproblems. 
+            weights (List[Array]): List of Weight vectors corresponding to each subproblems.
                 Each Weight vector is an array of length equals to the problem dimension i.e. number of objectives.
             len_neighborhood (int): number of closest weight vector to find in the neighborhood of each weight vector.
             init_population (List[array]): if a preferred initial population is needed.
         """
+        self.listnbEP = []
+        self.listHP = []
         self.mop = mop
         # dimension of the multi objective problem (number of objectives)
         self.dim = mop.getDim()
-        # TODO : #Peut être mettre le dictionnaire paramls ici (plus logique) et l'ajouter en paramètre de classe
         self.params = params
         self.criterion = stop_criterion
         self.weights = weights
         self.T_ = len_neighborhood
 
-        # There are as much subproblems as there are weight vectors
+        # There are as many subproblems as there are weight vectors
         self.N_ = len(self.weights)
 
         # Step 1.1 : Initialize EP (External population) as empty
@@ -34,7 +37,7 @@ class MOEAD():
         self.ex_pop = []
 
         # Step 1.2 : Find T closest neighbors for each of the N weight vectors
-        # Stores the neighborrhood for each subproblems as an index of self.weights, and self.population
+        # Stores the neighborhood for each subproblem as an index of self.weights, and self.population
         self.B_ = self.neighborhood()
 
         # Step 1.3 : Generate an initial population
@@ -47,13 +50,19 @@ class MOEAD():
             self.population = init_population
             self.F_pop = [self.mop.evaluate(x) for x in self.population]
 
-        # Step 1.4 : Reference solution for each objectif
+        # Step 1.4 : Reference solution for each objective
         self.z_ = self.init_z()
 
-        # Competeur de genération
+        # Nadir point initialization for normalization
+        # Find the worst point (Max) for each objective in the initial population
+        self.z_nad = [float('-inf')] * self.dim
+        for sol_eval in self.F_pop:
+            for m in range(self.dim):
+                if sol_eval[m] > self.z_nad[m]:
+                    self.z_nad[m] = sol_eval[m]
+
+        # Generation counter
         self.gen = 0
-
-
         self.percentage_mutation = percentage_mutation
 
     # Step 2
@@ -61,38 +70,47 @@ class MOEAD():
         for i in range(self.N_):
             # Step 2.1 : Reproduction
 
-            # Selction of 2 parents
+            # Selection of 2 parents
             k, l = self.select_mating(i)
             x_k, x_l = self.population[k], self.population[l]  # 2 chromosomes of the parents
             y = self.generate_solution(x_k, x_l)  # create a child
 
             # Step 2.2 : Improvement
-            y_clean = self.repair(y)
+            # Solution repair is delegated to the problem (MOP)
+            y_clean = self.mop.repair(y)
 
-            # Step 2.3 : Update of z
+            # Step 2.3 : Update of z AND z_nad
             F_y = self.mop.evaluate(y_clean)
             for m in range(self.dim):
                 if self.z_[m] > F_y[m]:
                     self.z_[m] = F_y[m]
 
-            # Step 2.4 : Update of neighboring solutions
-            for j in self.B_[i]:
+                # Update the Nadir point
+                if self.z_nad[m] < F_y[m]:
+                    self.z_nad[m] = F_y[m]
 
-                g_y = self.tcheb_aggFunc(j, self.weights, F_y, self.z_)
-                g_old_j = self.tcheb_aggFunc(j, self.weights, self.F_pop[j], self.z_)
+            # Step 2.4 : Update of neighboring solutions
+            count = 0
+            max_count = 2
+            for j in self.B_[i]:
+                if count >= max_count: break
+                # Pass z_nad for normalization
+                g_y = self.tcheb_aggFunc(j, self.weights, F_y, self.z_, self.z_nad)
+                g_old_j = self.tcheb_aggFunc(j, self.weights, self.F_pop[j], self.z_, self.z_nad)
 
                 if g_y <= g_old_j:
                     self.population[j] = y_clean
                     self.F_pop[j] = F_y
+                    count += 1
 
             # Step 2.5 Update of EP (External Population)
             # Adds y_clean to the External Population if non dominated
             if self.non_dominated_in_expop(F_y):
                 self.ex_pop = [pair for pair in self.ex_pop if not self.is_dominated_by(pair[1], F_y)]
-                # On ajoute la nouvelle paire
+                # Add the new pair
                 self.ex_pop.append((y_clean, F_y))
 
-        # On met à jour le compteur de génération
+        # Update generation counter
         self.gen += 1
 
     # Step 3
@@ -103,29 +121,40 @@ class MOEAD():
         # If we don't pass the limit we continue
         while not self.is_criterion_met():
             self.update()
-            if self.gen % 10 == 0:
-                print(f"Génération {self.gen} terminée. Taille EP: {len(self.ex_pop)}")
+            self.listnbEP.append(len(self.ex_pop))
+            self.listHP.append(hypervolume(pf(self), [20.0, 65000.0, 20.0]))
+        return self.listnbEP, self.listHP
 
-    def tcheb_aggFunc(self, index, lambdas, F, z):
+    def tcheb_aggFunc(self, index, lambdas, F, z, z_nad):
         """
-        Compute the aggregation function following the Tchebycheff approach.
-        
-        Args:
-            index (int): current subproblem index (1 to N)
-            lambdas (List[Array]): weight vectors
-            F (Array): values of objective functions for current index
-            z (List[int]): reference
-
-        Returns:
-            int : value of the aggregation function, see Tchebycheff approach.
+        Tchebycheff with STRICT Normalization.
+        Forces all objectives onto a fair 0.0 - 1.0 scale.
         """
-        max_gap = 0
+        max_val = float('-inf')
 
         for m in range(self.dim):
-            g = lambdas[index][m] * abs(F[m] - z[m])
-            if max_gap < g:
-                max_gap = g
-        return max_gap
+            # 1. Dynamic scale calculation (Nadir - Ideal)
+            scale = z_nad[m] - z[m]
+
+            # Safety: If scale is zero (all points are identical), set to 1.0
+            if scale < 1e-9:
+                scale = 1.0
+
+            # 2. Normalization: (Value - Min) / (Max - Min)
+            # Provides a value between 0 and 1 for ALL objectives
+            normalized_diff = abs(F[m] - z[m]) / scale
+
+            # 3. Weight application
+            # If lambda is 0, keep a tiny trace (1e-6) to avoid ignoring the objective
+            weight = lambdas[index][m]
+            if weight < 1e-6: weight = 1e-6
+
+            val = weight * normalized_diff
+
+            if val > max_val:
+                max_val = val
+
+        return max_val
 
     def select_mating(self, index):
         """
@@ -133,11 +162,8 @@ class MOEAD():
         See # Step 2.1 in self.update()
         """
         indices = list(range(self.T_))
-
         i = rd.randint(0, self.T_ - 1)
-
         rest_indices = indices[:i] + indices[i + 1:]
-
         j_id = rd.randint(0, len(rest_indices) - 1)
         j = rest_indices[j_id]
 
@@ -150,7 +176,6 @@ class MOEAD():
         Returns:
             Bool
         """
-
         y_wins = all(F_y[m] <= F_x[m] for m in range(self.dim))
         y_strictly_wins = any(F_y[m] < F_x[m] for m in range(self.dim))
         return y_wins and y_strictly_wins
@@ -168,47 +193,22 @@ class MOEAD():
                 return False
         return True
 
-    # TODO
     def generate_solution(self, x1, x2):
-        # On crée un enfant par croisement uniforme
+        # Create a child via uniform crossover
         y = np.array(x1).copy()
         for i in range(len(y)):
             if rd.random() < 0.5:
                 y[i] = x2[i]
 
-        # Mutation : On change une tâche au hasard
+        # Mutation: Change a random task
         if rd.random() < self.percentage_mutation:
             idx_tache = rd.randint(0, (len(y) // 2) - 1)
-            # Mutation du serveur
+            # Server mutation
             y[2 * idx_tache] = rd.randint(0, self.params['M'])
-            # Mutation des ressources
+            # Resource mutation
             y[2 * idx_tache + 1] = rd.randint(1, 7)
 
         return y
-
-    def repair(self, y):
-        # On s'assure que les valeurs restent des entiers dans les bornes
-        for i in range(len(y)):
-            low, high = self.mop.bounds_x[i]
-            y[i] = int(np.clip(y[i], low, high))
-
-        # Contrainte : Somme des CPU par serveur <= 8
-        M = self.params['M']
-        cap_max = self.params['mnv']  # 8
-
-        usage = np.zeros(M + 1)
-        for n in range(len(y) // 2):
-            srv = int(y[2 * n])
-            cpu = y[2 * n + 1]
-            if srv > 0:  # Si c'est un MEC
-                if usage[srv] + cpu > cap_max:
-                    # Si ça déborde, on envoie la tâche sur le Cloud (Bricolage un peu)
-                    y[2 * n] = 0
-                else:
-                    usage[srv] += cpu
-        return y
-
-        # TODO
 
     def neighborhood(self):
         """
@@ -219,32 +219,24 @@ class MOEAD():
         for i in range(self.N_):
             distances = []
             for j in range(self.N_):
-                # Distance between the vectors with weigth i and j (distance euclidienne)
+                # Distance between vectors with weights i and j (Euclidean distance)
                 dist = np.linalg.norm(self.weights[i] - self.weights[j])
-                # We had the distance to a list
+                # Add distance to the list
                 distances.append((dist, j))
 
-            # We sort the list
+            # Sort the list
             distances.sort()
-            # T is an int to fix the number of closest neighbor that we keep
-
-            # TODO Remarque est ce que le poids lui meme est son propre voisin pusique distance = 0 ?
-            # Peut etre faire distances[1:self.T_+1].
-            # Non pcq après si on l'ajoute pas au voisinage on passe pas le vecteur dans la fonction de Tchebimachin là donc on comparerait la solution
-            # juste avec les solutions des vecteurs voisins et même pas à la solution associé au vecteur pour lequel il a été créé c'est quand même con
-
+            # indices of the closest neighbors
             indices = [d[1] for d in distances[:self.T_]]
             B.append(indices)
         return B
 
-    # TODO
     def init_pop(self):
         """
         Generates a population and stores each element by the MOP objective functions F.
         Returns:
             List[Array], List[Array]: population of solutions, evaluations by objective functions
         """
-        # Need to figure out the generation of population
         population = []
         for _ in range(self.N_):
             chromosome = []
@@ -257,14 +249,12 @@ class MOEAD():
         f_pop = [self.mop.evaluate(ind) for ind in population]
         return population, f_pop
 
-    # TODO
     def init_z(self):
         """
         Initiates as infinite.
         """
         return [float('inf')] * self.dim
 
-    # TODO
     def is_criterion_met(self):
         """
         Compares criterion with gen attribute.

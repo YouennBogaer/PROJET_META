@@ -17,7 +17,6 @@ Author: Manuel Belmadani <mbelm006@uottawa.ca>
 Date  : 2016-09-05
 
 """
-from exceptions import NotImplementedError
 from deap import tools
 
 import random
