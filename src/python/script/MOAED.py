@@ -119,10 +119,14 @@ class MOEAD():
         Execute the MOEAD algorithm.
         """
         # If we don't pass the limit we continue
+        count_exec = 1
         while not self.is_criterion_met():
             self.update()
             self.listnbEP.append(len(self.ex_pop))
             self.listHP.append(hypervolume(pf(self), [20.0, 65000.0, 20.0]))
+            #if count_exec % 50 == 0 :
+                #print(f"exec n°{count_exec}/{self.criterion} totale EP {len(self.ex_pop)}")
+            count_exec +=1
         return self.listnbEP, self.listHP
 
     def tcheb_aggFunc(self, index, lambdas, F, z, z_nad):

@@ -29,7 +29,7 @@ def calculate_spacing(front):
     f_min = front.min(axis=0)
     f_max = front.max(axis=0)
     denom = f_max - f_min
-    denom[denom == 0] = 1  # Éviter division par zéro
+    denom[denom == 0] = 1  # Éviter division  zéro
 
     normalized_pf = (front - f_min) / denom
 

@@ -80,7 +80,7 @@ def run_single_experiment(seed, args, n_tasks,param):
                   len_neighborhood=nnb_neigh, params=param, percentage_mutation=args.mutation)
 
     # Lancement
-    moead.execute()
+    _,_ = moead.execute()
     pareto_front = pf(moead)
 
     if len(pareto_front) == 0:
@@ -94,10 +94,10 @@ def run_single_experiment(seed, args, n_tasks,param):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--runs", type=int, default=10, help="Nb de tests par pack")
-    parser.add_argument("--stop", type=int, default=1500, help="Nb générations")
-    parser.add_argument("--mutation", type=float, default=0.25, help="Taux mutation")
-    parser.add_argument("--H", type=int, default=15, help="Découpage poids")
-    parser.add_argument("--neighbor", type=float, default=0.2, help="Taille voisinage %")
+    parser.add_argument("--stop", type=int, default=1000, help="Nb générations")
+    parser.add_argument("--mutation", type=float, default=0.5, help="Taux mutation")
+    parser.add_argument("--H", type=int, default=12, help="Découpage poids")
+    parser.add_argument("--neighbor", type=float, default=0.05, help="Taille voisinage %")
     parser.add_argument("--tasks", type=int, default=50)  # Pour compatibilité
     args = parser.parse_args()
 
@@ -134,10 +134,10 @@ if __name__ == "__main__":
     plt.bar(SCENARIOS_TASKS, results_f1, width=30, color='b', label='MOEA/D', alpha=0.7)
     plt.xlabel('Number of IoT applications')
     plt.ylabel('Completion time (ms)')
-    plt.xticks(SCENARIOS_TASKS)  # Pour que les nombres soient bien sous les barres
+    plt.xticks(SCENARIOS_TASKS)
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.legend()
-    plt.savefig('completion_time.png')
+    plt.savefig('results_comparaison_plot/completion_time.png')
 
     # Charge
     plt.figure(figsize=(8, 5))
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     plt.xticks(SCENARIOS_TASKS)
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.legend()
-    plt.savefig('load_balance.png')
+    plt.savefig('results_comparaison_plot/load_balance.png')
 
     # Énergie
     plt.figure(figsize=(8, 5))
@@ -157,6 +157,6 @@ if __name__ == "__main__":
     plt.xticks(SCENARIOS_TASKS)
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.legend()
-    plt.savefig('energy_consumption.png')
+    plt.savefig('results_comparaison_plot/energy_consumption.png')
 
-    print("Fichiers sauvegardés : completion_time.png, load_balance.png, energy_consumption.png")
+    print("Fichiers sauvegardés : results_comparaison_plot/completion_time.png, results_comparaison_plot/load_balance.png, results_comparaison_plot/energy_consumption.png")

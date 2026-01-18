@@ -66,7 +66,7 @@ def obj_functions(chromosome, p, task):
     eck = p['rn'] * (total_available_time - active_work_time)
 
     # Total Energy
-    f2_ectot = ecb + ecf + eck
+    f2_ectot = (ecb + ecf + eck)
 
     # 3. Load Balancing (F3)
     # Calculate VM usage per MEC server

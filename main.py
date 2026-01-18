@@ -14,7 +14,7 @@ from src.python.script import (MOP,
                                afficher_pareto_3d,
                                )
 
-from src.python.script.save_results import plot_parallel_coordinates
+
 from src.python.script.metrics import calculate_spacing, hypervolume, pf
 
 
@@ -28,12 +28,12 @@ tasks_data = {
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", type=str, default="resultat", help="name of resuslts")
-    parser.add_argument("--stop", type=int, default=100, help="ncriterion stop number of génération")
+    parser.add_argument("--stop", type=int, default=1500, help="ncriterion stop number of génération")
     parser.add_argument("--save_json", action="store_true", help="Sauvegarder les résultats en JSON")
-    parser.add_argument("--mutation", type=float, default=0.2, help="Define the percentage of mutation for each child")
-    parser.add_argument("--H", type=int, default=10,
+    parser.add_argument("--mutation", type=float, default=0.5, help="Define the percentage of mutation for each child")
+    parser.add_argument("--H", type=int, default=15,
                         help="Definit le nombre de découpage que l'on fait de notre problème")
-    parser.add_argument("--neighbor", type=float, default=5,
+    parser.add_argument("--neighbor", type=float, default=0.05,
                         help="Definit le nombre de voisisns des vecteurs à qui on va comparer le nouvel enfant")
 
     #################################################################################################
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     #
     #################################################################################################
     # On conseil de visiter les voisins entre 5 et 10% du nombre de dimension on obtient le nombre de dimensions en
-    # faisant m-1 parmis H et donc dans notre cas 3 parmi H
+    # faisant m-1 parmis H+m-1 et donc dans notre cas 3 parmi H
 
     # TODO : rajouter les metadonnés noter quelque part après une éxécution
 
@@ -100,11 +100,12 @@ if __name__ == "__main__":
     hv = hypervolume(pf, fixed_ref_point)
     print(f"hypervolume : {hv}")
     afficher_pareto_3d(moead, filename)
-    plot_parallel_coordinates(pf, filename)
 
     plt.plot(list_EP)
 
     plt.savefig("results/" + "EP_list")
+    plt.xlabel("Number of executions")
+    plt.ylabel("Number of points in Pareto front")
     plt.show()
     plt.plot(list_HP)
     plt.savefig("results/" + "HPList")
@@ -116,5 +117,3 @@ if __name__ == "__main__":
     #   Comparison with another implementation
     #
     #################################################################################################
-    if args.evaluate:
-        print("Yo")

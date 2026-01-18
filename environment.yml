@@ -1,0 +1,7 @@
+name: opti
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - pygmo
+prefix: /home/vic/miniconda3/envs/opti
