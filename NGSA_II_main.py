@@ -82,6 +82,7 @@ class MyOptimizationProblem:
         return 3
 
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", type=str, default="res_pygmo_nsga2", help="nom des resultats")
@@ -103,8 +104,8 @@ if __name__ == "__main__":
     # Génération de la population
     pop = pg.population(prob, size=500)
 
-    print(f"Lancement de la chasse (NSGA-II)")
     start = time.time()
+
     pop = algo.evolve(pop)
     end = time.time()
 
@@ -119,20 +120,28 @@ if __name__ == "__main__":
     afficher_pareto(pop, args.name)
 
     if len(pareto_front) > 0:
-        # Calcul des métriques de performance
-        ref_point = [
-            np.max(pareto_front[:, 0]) * 1.1,
-            np.max(pareto_front[:, 1]) * 1.1,
-            np.max(pareto_front[:, 2]) * 1.1
-        ]
+        #  Point de référence pour la normalisation
+        fixed_ref_point = np.array([5000.0, 500000.0, 50000.0])
+        f_min = np.array([0.0, 0.0, 0.0])
 
+
+        pf_norm = (pareto_front - f_min) / (fixed_ref_point - f_min)
+
+        # Calcul du Spacing
         spacing = calculate_spacing(pareto_front)
-        hv = pg.hypervolume(pareto_front).compute(ref_point)
 
+        #  Calcul de l'Hypervolume normalisé
+        # On utilise [1.1, 1.1, 1.1] comme référence sur le front normalisé
+        ref_norm = [1.1, 1.1, 1.1]
+        hv_obj = pg.hypervolume(pf_norm)
+        hv_value = hv_obj.compute(ref_norm)
+
+        # Score final entre 0 et 1
+        hv_final = hv_value / (1.1 ** 3)
 
         print(f"Points sur le front : {len(pareto_front)}")
         print(f"Spacing : {spacing:.4f}")
-        print(f"Hypervolume : {hv:.4f}")
+        print(f"Hypervolume Normalisé : {hv_final:.4f}")
 
     else:
-        print("Aucune solution")
+        print("Aucune solution trouvée..")

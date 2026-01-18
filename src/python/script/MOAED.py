@@ -123,7 +123,7 @@ class MOEAD():
         while not self.is_criterion_met():
             self.update()
             self.listnbEP.append(len(self.ex_pop))
-            self.listHP.append(hypervolume(pf(self), [20.0, 65000.0, 20.0]))
+            self.listHP.append(hypervolume(pf(self), [5000.0, 500000.0, 50000.0]))
             #if count_exec % 50 == 0 :
                 #print(f"exec n°{count_exec}/{self.criterion} totale EP {len(self.ex_pop)}")
             count_exec +=1

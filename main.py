@@ -18,13 +18,24 @@ from src.python.script import (MOP,
 from src.python.script.metrics import calculate_spacing, hypervolume, pf
 
 
-N_tasks = params['N']
-tasks_data = {
-    'G': np.random.randint(10, 100, N_tasks),
-    'RG': np.random.randint(1, 20, N_tasks),
-    'parent': np.random.randint(1, params['M'] + 1, N_tasks)
-}
 
+import pandas as pd
+
+
+import pandas as pd
+
+df_t = pd.read_excel('task200.xlsx', sheet_name='TaskDetails')
+df_n = pd.read_excel('task200.xlsx', sheet_name='NodeDetails')
+
+params['N'] = len(df_t)
+params['M'] = len(df_n)
+
+tasks_data = {
+    'G': df_t['Number of instructions (109 instructions)'].values,
+    'RG': df_t['Output file size (MB)'].values,
+    'parent': np.random.randint(1, params['M'] + 1, params['N'])
+}
+N_tasks = params['N']
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", type=str, default="resultat", help="name of resuslts")
@@ -95,8 +106,10 @@ if __name__ == "__main__":
     print(f"taille du front en point : {len(pf)}")
     spacing = calculate_spacing(pf)
     print(f"spacing : {spacing}")
+    # Trouve le pire score pour chaque objectif dans tes résultats réels
+    max_scores = np.max(pf, axis=0)
 
-    fixed_ref_point = [20.0, 65000.0, 20.0]
+    fixed_ref_point = [5000.0, 500000.0, 50000.0]
     hv = hypervolume(pf, fixed_ref_point)
     print(f"hypervolume : {hv}")
     afficher_pareto_3d(moead, filename)
